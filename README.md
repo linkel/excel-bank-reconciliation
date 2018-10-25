@@ -13,8 +13,8 @@ In order to make this script work you need 2 things:
  * an .XLSX file with two sheets
  
 # Instructions
-* Excel file contains two sheets: (sheet_A, sheet_B)
-* Relevant columns in "Sheet_A" are I and P
+1. Excel file contains two sheets: (sheet_A, sheet_B)
+2. Relevant columns in "Sheet_A" are I and P
 
 | Column I | Column P         |
 | ------------- |:----------:|
@@ -22,7 +22,7 @@ In order to make this script work you need 2 things:
 |   20243       | Solar Panel Company      |
 | 	94319       | Mech Equipment V81349      |
 
-* Relevant columns in "Sheet_B" are H and J
+3. Relevant columns in "Sheet_B" are H and J
 
 | Column H        | Column J        |
 | ------------- |:-------------:|
@@ -30,10 +30,10 @@ In order to make this script work you need 2 things:
 |  Design Architecture      | 19288      |
 | 	Equipment #V81349    | 94319      |
 
-* Keep your Excel file in the same folder as the script recon.py
-* ```python recon.py```
-* Follow the prompt
-* After the script is done, your results file ready.xlsx will have these two cells highlighted in both sheets since they were the same in both sheets:
+4. Keep your Excel file in the same folder as the script recon.py
+5. ```python recon.py```
+6. Follow the prompt
+7. After the script is done, your results file ready.xlsx will have these two cells highlighted in both sheets since they were the same in both sheets:
 
 | Column I | Column P         |
 | ------------- |:----------:|
