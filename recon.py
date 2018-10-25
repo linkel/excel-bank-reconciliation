@@ -110,13 +110,14 @@ count = 0    # keep track of matches found
 matches = [] # another tracking of matches to go back to highlight the bank statement sheet
 for row in range(2, userSheet.max_row + 1):
     AmcellObject = userSheet["J" + str(row)]        # same as above for every record on column J of the excel file
-
-    if AmcellObject.value in amounts:           #check for matches in the "amount" column
-        AmcellObject.style = highlight          
-        matches.append(abs(AmcellObject.value))
-        count += 1
-    elif AmcellObject.value != '' and AmcellObject.value != None and AmcellObject.value != 0:
-        AmcellObject.style = red
+    if AmcellObject.value != '' and AmcellObject.value != None and AmcellObject.value != 0 and isinstance(AmcellObject.value, str) == False:
+        if abs(AmcellObject.value) in amounts:           #check for matches in the "amount" column
+            AmcellObject.style = highlight          
+            matches.append(abs(AmcellObject.value))
+            amounts.remove(abs(AmcellObject.value))
+            count += 1
+        elif AmcellObject.value != '' and AmcellObject.value != None and AmcellObject.value != 0:
+            AmcellObject.style = red
 print(str(count) + " matches found")
 print("\n")
 for row in range(2, bankSheet.max_row + 1):
@@ -125,6 +126,7 @@ for row in range(2, bankSheet.max_row + 1):
     if eachObj != '' and eachObj != None and eachObj != 0:
         if abs(eachObj) in matches:           #check  for matches in the "amount" column
             AmcellObject.style = highlight
+            matches.remove(abs(eachObj))
         else:
             AmcellObject.style = red        
 
