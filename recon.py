@@ -126,7 +126,7 @@ for row in range(2, bankSheet.max_row + 1):
     if eachObj != '' and eachObj != None and eachObj != 0:
         if abs(eachObj) in matches:           #check  for matches in the "amount" column
             AmcellObject.style = highlight
-            matches.remove(abs(eachObj))
+            # matches.remove(abs(eachObj)) I don't think I need to remove for the matches, right?
         else:
             AmcellObject.style = red        
 
@@ -175,6 +175,38 @@ for row in range(2, bankSheet.max_row + 1):
         eachObj = eachObj[-5:]
         if eachObj in acctmatches:           # check for matches in the "account" column
             AmcellObject.style = highlight    
+
+
+# this next part tries to sum nearby numbers with same department numbers...WIP
+
+for row in range(2, userSheet.max_row + 1):
+    theCellObj = userSheet["G" + str(row)]
+    numberacross = userSheet["J" + str(row)]
+    departmentnumber = theCellObj.value
+    collection = []
+    objcoll = []
+    if numberacross.value != None and numberacross.value != "Balance ":
+        collection.append(abs(float(numberacross.value)))
+        objcoll.append(numberacross)
+    for nextrow in range(row+1, 18):
+        nextCellObj = userSheet["G" + str(nextrow)]
+        nextnumberacross = userSheet["J"+str(nextrow)]
+        if nextCellObj.value != None:
+            if nextCellObj.value != None and nextCellObj.value != departmentnumber:
+                print(departmentnumber)
+                break
+            if nextnumberacross.style == highlight:
+                print("it already")
+                break
+            elif nextCellObj.value == departmentnumber:
+                if nextnumberacross.value != None:
+                    collection.append(abs(float(nextnumberacross.value)))
+                    objcoll.append(nextnumberacross)
+                    print("Appending")
+    if len(collection) > 1 and sum(collection) in amounts:
+        for stuff in objcoll:
+            stuff.style = highlight
+            print("found collection sums")
 
 print("SUCCESS:" + str(count) + " transaction matches highlighted")
 print("SUCCESS:" + str(newcount) + " possible account matches highlighted")
