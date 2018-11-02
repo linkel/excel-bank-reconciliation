@@ -208,7 +208,7 @@ for row in range(2, bankSheet.max_row + 1):
     if eachObj != '' and eachObj != None and eachObj != 0:
         if abs(eachObj) in matches:           #check  for matches in the "amount" column
             AmcellObject.style = highlight
-            # matches.remove(abs(eachObj)) I don't think I need to remove for the matches, right?
+            matches.remove(abs(eachObj))
         else:
             AmcellObject.style = red      
 
