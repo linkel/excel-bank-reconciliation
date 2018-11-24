@@ -104,7 +104,7 @@ print("\n")
 print("Processing your data....")
 print("Finding matches...")
 count = 0    # keep track of matches found
-matches = [] # another tracking of matches to go back to highlight the bank statement sheet
+matches = [] # another tracking of matches to go back to highlight the Alcolink sheet
 for row in range(2, userSheet.max_row + 1):
     FA_cellobj = userSheet["J" + str(row)]
     if FA_cellobj.value != '' and FA_cellobj.value != None and FA_cellobj.value != 0 and isinstance(FA_cellobj.value, str) == False:
@@ -144,6 +144,7 @@ for row in range(2, userSheet.max_row + 1):
                             sumList.append(abs(float(Transaction.value)))
                             objectList.append(Transaction)
                 if sum(sumList) in amounts:
+                    print(sum(sumList))
                     sumCount += 1
                     for stuff in objectList:
                         stuff.style = highlight
@@ -153,66 +154,32 @@ for row in range(2, userSheet.max_row + 1):
             acctmatches.append(eachObj)
             newcount += 1
 print(str(newcount) + " possible account number matches found")
-#print(str(sumCount) + " sums added to highlight")
+print(str(sumCount) + " sumcounts found")
 
+# Vnumber match highlight in Alcolink Sheet
 print("\n")
 for row in range(2, bankSheet.max_row + 1):
-    AmcellObject = bankSheet["P" + str(row)]        # same as above for every record on column P of the excel file
-    eachObj = str(AmcellObject.value)
+    AlcoCellObj = bankSheet["P" + str(row)]        # same as above for every record on column P of the excel file
+    eachObj = str(AlcoCellObj.value)
     if eachObj != '' and eachObj != None and eachObj != 0:
         eachObj = eachObj[-5:]
         if eachObj in acctmatches:           # check for matches in the "account" column
-            AmcellObject.style = highlight    
+            AlcoCellObj.style = highlight    
+            acctmatches.remove(eachObj)
 
-
-# this next part tries to sum nearby numbers with same department numbers...WIP
-sums = 0
-for row in range(2, userSheet.max_row + 1):
-    theCellObj = userSheet["G" + str(row)]
-    numberacross = userSheet["J" + str(row)]
-    departmentnumber = theCellObj.value
-    collection = []
-    objcoll = []
-    if numberacross.value != None and numberacross.value != "Balance ":
-        #print(numberacross.value)
-        collection.append(abs(float(numberacross.value)))
-        objcoll.append(numberacross)
-    for nextrow in range(row+1, row+18):
-        nextCellObj = userSheet["G" + str(nextrow)]
-        nextnumberacross = userSheet["J"+str(nextrow)]
-        #print(nextnumberacross.value)
-        if nextCellObj.value != None:
-            if nextCellObj.value == departmentnumber:
-                if nextnumberacross.value != None and nextnumberacross.value not in matches:
-                    collection.append(abs(float(nextnumberacross.value)))
-                    objcoll.append(nextnumberacross)
-                    #print("Appending")
-            if nextCellObj.value != None and nextCellObj.value != departmentnumber:
-                #print(str(nextrow) + "break")
-                break
-    #print(str(row) +" done, current sum: " + str(round(sum(collection),2)))
-    if len(collection) > 1 and round(sum(collection),2) in amounts:
-        matches.append(round(sum(collection),2))
-        for stuff in objcoll:
-            stuff.style = highlight
-            #print("found collection sums")
-            sums += 1
-
-# highlighting the matches in the banksheet
+# highlighting the matches in the Alcolink Sheet
 for row in range(2, bankSheet.max_row + 1):
-    AmcellObject = bankSheet["I" + str(row)]        # same as above for every record on column I of the excel file
-    eachObj = AmcellObject.value
-    if eachObj != '' and eachObj != None and eachObj != 0 and isinstance(eachObj, str) == False:
-        if abs(eachObj) in matches:           #check  for matches in the "amount" column
-            AmcellObject.style = highlight
-            matches.remove(abs(eachObj)) # I don't think I need to remove for the matches, right? -new note: yes you did.
+    AlcoCellObj = bankSheet["I" + str(row)]        # same as above for every record on column I of the excel file
+    value = AlcoCellObj.value
+    if value != '' and value != None and value != 0 and isinstance(value, str) == False:
+        if -value in matches:           #check for matches in the "matches" list
+            AlcoCellObj.style = highlight
+            matches.remove(-value)
         else:
-            AmcellObject.style = red      
+            AlcoCellObj.style = red      
 
 print("SUCCESS:" + str(count) + " transaction matches highlighted")
 print("SUCCESS:" + str(newcount) + " possible account matches highlighted")
-print("SUCCESS:" + str(sums) + " sums matches highlighted")
-
 print("creating new file in your folder....")
 workBook.save("ready.xlsx")             # create new file with all the matched instance highlighted automatically
 print("ready.xlsx created")
