@@ -144,6 +144,7 @@ for row in range(2, userSheet.max_row + 1):
                             sumList.append(abs(float(Transaction.value)))
                             objectList.append(Transaction)
                 if sum(sumList) in amounts:
+                    matches.append(sum(sumList))
                     sumCount += 1
                     for stuff in objectList:
                         stuff.style = highlight
