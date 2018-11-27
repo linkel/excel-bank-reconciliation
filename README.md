@@ -1,5 +1,5 @@
 # What's this?
-Performs transaction reconciliation on two sheets of an Excel spreadsheet. Helps automate some drudge work. This was written based off of alifarhadd's auto_bank_reconciliation script, modified to suit a very specific purpose as requested. 
+Performs transaction reconciliation on two sheets of an Excel spreadsheet. Helps automate some drudge work. This was written based off of alifarhadd's auto_bank_reconciliation script, modified to suit a very specific set of spreadsheets. 
 
 # Function
 This script is organized as such:
