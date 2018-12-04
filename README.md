@@ -1,5 +1,8 @@
 # What's this?
-Performs transaction reconciliation on two sheets of an Excel spreadsheet. Helps automate some drudge work. This was written based off of alifarhadd's auto_bank_reconciliation script, modified to suit a very specific purpose as requested. 
+Performs transaction reconciliation on two sheets of an Excel spreadsheet. Helps automate some drudge work. This was written based off of alifarhadd's auto_bank_reconciliation script, modified to suit a very specific purpose.
+
+- verysimplerecon.py does not perform the sum matching. I found that recon and simplerecon make mistakes on various edge cases. 
+- recon_revamp.py is a work in progress to use pandas to perform the work, since doing it all in openpyxl seems error-prone (for me).
 
 # Function
 This script is organized as such:
