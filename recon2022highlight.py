@@ -42,10 +42,63 @@ no_result_color.fill = PatternFill(fill_type='lightUp',
                  start_color='fff000',
                 end_color='FFA500')
 
+# an attempt at data cleaning
+# order matters since we'll test in this order
+alco_prefixes = [
+    'dep',
+    '0000'
+]
+
+fa_prefixes = [
+    '0000',
+    'dep: jid',
+    'dep : ',
+    'dep :',
+    'dep: ',
+    'dep:',
+    'dep # ',
+    'dep #',
+    'dep ',
+    'dep',
+    'ji\'d#',
+    'ji\'d # ',
+    'ji\'d #',
+    'jid : ',
+    'jid :',
+    'jid: ',
+    'jid:'
+    'jid ',
+    'jid',
+    'dp # ',
+    'dp #',
+    'dp# ',
+    'dp#',
+    'dp : ',
+    'dp :',
+    'dp: ',
+    'dp:',
+    'dp ',
+    'dp',
+]
+
 wb = openpyxl.load_workbook(wb_name + str(".xlsx"))
 
 alco_sheet = wb.get_sheet_by_name(alco_sheet_name)
 fa_sheet = wb.get_sheet_by_name(fa_sheet_name)
+
+
+def trim_prefixes_need_match(value, prefixes):
+    for prefix in prefixes:
+        if value.startswith(prefix):
+            return value[len(prefix):]
+    return ''
+
+
+def trim_prefixes_no_match_okay(value, prefixes):
+    for prefix in prefixes:
+        if value.startswith(prefix):
+            return value[len(prefix):]
+    return value
 
 # we care about alco first, check column G
 # which contains Journal Ids which can be deposit numbers
@@ -55,20 +108,15 @@ def get_unique_journal_ids_and_sums(sheet_obj):
     for row in range(2, sheet_obj.max_row + 1):
         id_cell = sheet_obj["G" + str(row)]
         id_cell_value = id_cell.value
+        id_cell_value = id_cell_value.lower()
 
         transaction_amt_cell = sheet_obj["I" + str(row)]
         transaction_amt = float(transaction_amt_cell.value)
-        # Just add DEP and 0000 ones
-        # don't bother adding the others yet
-        # DEP is a deposit number
-        # 0000 is a journal number prefix
-        if id_cell_value.startswith('DEP'):
-            id_cell_value = id_cell_value[3:]
-            # for some reason getting tons of zeroes and a little bit of change at the end so I will round
-            ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + transaction_amt, 2)
-        elif id_cell_value.startswith('0000'):
-            id_cell_value = id_cell_value[4:]
-            ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + transaction_amt, 2)
+
+        # we only take matching prefixes to DEP (deposit number) and 0000 (journal number)
+        trimmed_value = trim_prefixes_need_match(id_cell_value, alco_prefixes)
+        if trimmed_value != '':
+            ids_to_amt[trimmed_value] = round(ids_to_amt.setdefault(trimmed_value, 0) + transaction_amt, 2)
     # print(ids_to_amt)
     return ids_to_amt
 
@@ -86,53 +134,12 @@ def get_fa_journal_id_and_sums(sheet_obj):
             id_cell_value = id_cell_value.lower()
             trans_amt = float(trans_amt_cell_value)
 
-            if id_cell_value.startswith('0000'):
-                id_cell_value = id_cell_value[4:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            # bruh
-            elif id_cell_value.startswith('dep: jid'):
-                id_cell_value = id_cell_value[8:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('dep: '):
-                id_cell_value = id_cell_value[5:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('dep:'):
-                id_cell_value = id_cell_value[4:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('dep : '):
-                id_cell_value = id_cell_value[6:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('dep :'):
-                id_cell_value = id_cell_value[5:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('dep # '):
-                id_cell_value = id_cell_value[6:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('dep #'):
-                id_cell_value = id_cell_value[5:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('dep '):
-                id_cell_value = id_cell_value[4:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('dep'):
-                id_cell_value = id_cell_value[3:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('jid '):
-                id_cell_value = id_cell_value[4:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('jid'):
-                id_cell_value = id_cell_value[3:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('dp '):
-                id_cell_value = id_cell_value[3:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            elif id_cell_value.startswith('dp'):
-                id_cell_value = id_cell_value[2:]
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
-            else:
-                ids_to_amt[id_cell_value] = round(ids_to_amt.setdefault(id_cell_value, 0) + trans_amt, 2)
+            # for FA we return the original string if it had no prefixes
+            # because people do their data entry all over the place
+            trimmed_value = trim_prefixes_no_match_okay(id_cell_value, fa_prefixes)
+            if trimmed_value != '':
+                ids_to_amt[trimmed_value] = round(ids_to_amt.setdefault(trimmed_value, 0) + trans_amt, 2)
 
-    # print(ids_to_amt)
     return ids_to_amt
 
 # mutates cell
@@ -156,12 +163,10 @@ def color_alco_rows(sheet_obj, good_ids, no_match_ids, no_res_ids):
         id_cell_value = cell.value
         t_cell = sheet_obj["I" + str(row)]
         
-        if id_cell_value.startswith('DEP'):
-            id_cell_value = id_cell_value[3:]
-            do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-        elif id_cell_value.startswith('0000'):
-            id_cell_value = id_cell_value[4:]
-            do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
+        trimmed_value = trim_prefixes_need_match(id_cell_value, alco_prefixes)
+        if trimmed_value != '':
+            do_color(cell, t_cell, trimmed_value, good_ids, no_match_ids, no_res_ids)
+
 
 def color_fa_rows(sheet_obj, good_ids, no_match_ids, no_res_ids):
     for row in range(10, sheet_obj.max_row + 1):
@@ -174,57 +179,16 @@ def color_fa_rows(sheet_obj, good_ids, no_match_ids, no_res_ids):
         
         if (id_cell_value != None and t_cell_val != None):
             id_cell_value = id_cell_value.lower()
-            if id_cell_value.startswith('0000'):
-                id_cell_value = id_cell_value[4:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('dep: jid'):
-                id_cell_value = id_cell_value[8:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('dep: '):
-                id_cell_value = id_cell_value[5:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('dep:'):
-                id_cell_value = id_cell_value[4:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('dep : '):
-                id_cell_value = id_cell_value[6:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('dep :'):
-                id_cell_value = id_cell_value[5:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('dep # '):
-                id_cell_value = id_cell_value[6:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('dep #'):
-                id_cell_value = id_cell_value[5:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('dep '):
-                id_cell_value = id_cell_value[4:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('dep'):
-                id_cell_value = id_cell_value[3:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('jid '):
-                id_cell_value = id_cell_value[4:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('jid'):
-                id_cell_value = id_cell_value[3:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('dp '):
-                id_cell_value = id_cell_value[3:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            elif id_cell_value.startswith('dp'):
-                id_cell_value = id_cell_value[2:]
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
-            else:
-                do_color(cell, t_cell, id_cell_value, good_ids, no_match_ids, no_res_ids)
 
-
+            trimmed_value = trim_prefixes_no_match_okay(id_cell_value, fa_prefixes)
+            if trimmed_value != '':
+                do_color(cell, t_cell, trimmed_value, good_ids, no_match_ids, no_res_ids)
 
 alco_sums = get_unique_journal_ids_and_sums(alco_sheet)
 
 fa_sums = get_fa_journal_id_and_sums(fa_sheet)
 
+print(fa_sums)
 ids_to_color_green = set()
 ids_to_color_yellow = set()
 ids_to_color_orange = set()
