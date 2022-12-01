@@ -6,6 +6,7 @@ import sys
 import time
 import os
 import glob
+import collections
 
 # This recon python program is to reduce the amount of upfront work
 # by trying to find matches between the two excel sheets
@@ -100,6 +101,12 @@ def trim_prefixes_no_match_okay(value, prefixes):
             return value[len(prefix):]
     return value
 
+trim_to_original_alco = {}
+trim_to_original_fa = {}
+
+id_cell_count_alco = collections.Counter()
+id_cell_count_fa = collections.Counter()
+
 # we care about alco first, check column G
 # which contains Journal Ids which can be deposit numbers
 # or journals
@@ -117,6 +124,11 @@ def get_unique_journal_ids_and_sums(sheet_obj):
         trimmed_value = trim_prefixes_need_match(id_cell_value, alco_prefixes)
         if trimmed_value != '':
             ids_to_amt[trimmed_value] = round(ids_to_amt.setdefault(trimmed_value, 0) + transaction_amt, 2)
+            id_cell_count_alco[trimmed_value] += 1
+            if (trimmed_value in trim_to_original_alco):
+                trim_to_original_alco[trimmed_value].add(id_cell_value)
+            else:
+                trim_to_original_alco[trimmed_value] = set([id_cell_value])
     # print(ids_to_amt)
     return ids_to_amt
 
@@ -137,8 +149,13 @@ def get_fa_journal_id_and_sums(sheet_obj):
             # for FA we return the original string if it had no prefixes
             # because people do their data entry all over the place
             trimmed_value = trim_prefixes_no_match_okay(id_cell_value, fa_prefixes)
+            id_cell_count_fa[trimmed_value] += 1
             if trimmed_value != '':
                 ids_to_amt[trimmed_value] = round(ids_to_amt.setdefault(trimmed_value, 0) + trans_amt, 2)
+                if (trimmed_value in trim_to_original_fa):
+                    trim_to_original_fa[trimmed_value].add(id_cell_value)
+                else:
+                    trim_to_original_fa[trimmed_value] = set([id_cell_value])
 
     return ids_to_amt
 
@@ -160,7 +177,7 @@ def do_color(cell, t_cell, value, good_ids, no_match_ids, no_res_ids):
 def color_alco_rows(sheet_obj, good_ids, no_match_ids, no_res_ids):
     for row in range(2, sheet_obj.max_row + 1):
         cell = sheet_obj["G" + str(row)]
-        id_cell_value = cell.value
+        id_cell_value = cell.value.lower()
         t_cell = sheet_obj["I" + str(row)]
         
         trimmed_value = trim_prefixes_need_match(id_cell_value, alco_prefixes)
@@ -185,30 +202,56 @@ def color_fa_rows(sheet_obj, good_ids, no_match_ids, no_res_ids):
                 do_color(cell, t_cell, trimmed_value, good_ids, no_match_ids, no_res_ids)
 
 alco_sums = get_unique_journal_ids_and_sums(alco_sheet)
-
 fa_sums = get_fa_journal_id_and_sums(fa_sheet)
 
-print(fa_sums)
+# print(alco_sums)
+# print(fa_sums)
+
 ids_to_color_green = set()
 ids_to_color_yellow = set()
 ids_to_color_orange = set()
 
+total_sum_alco = 0
+total_sum_fa = 0
+
 for k, v in alco_sums.items():
     if k in fa_sums:
         fa_v = fa_sums[k] 
-        if abs(v) == abs(fa_v):
+        # negative values in alcolink are equal to positive values in fa
+        if -v == fa_v:
+            total_sum_alco += v
+            total_sum_fa += fa_v
             ids_to_color_green.add(k)
         else:
             ids_to_color_yellow.add(k)
     else:
         ids_to_color_orange.add(k)
 
+# print the total sum to sanity check
+# print(total_sum_alco, total_sum_fa)
+
 color_alco_rows(alco_sheet, ids_to_color_green, ids_to_color_yellow, ids_to_color_orange)
 color_fa_rows(fa_sheet, ids_to_color_green, ids_to_color_yellow, ids_to_color_orange)
 
-print(ids_to_color_green)
+# cell count for each id sanity check print
+# print(id_cell_count_alco)
+# print(id_cell_count_fa)
 
-print(ids_to_color_yellow)
+# sanity check on the trimmed id to the original ids (fa has instances of 1 to many)
+# print(trim_to_original_alco)
+# print(trim_to_original_fa)
+
+# Print the ones that are 1 to many for sanity check
+# for k, v in trim_to_original_alco.items():
+#     if len(v) > 1:
+#         print("alco lens more than 1", v)
+
+# for k, v in trim_to_original_fa.items():
+#     if len(v) > 1:
+#         print("fa lens more than 1", v)
+
+# print(ids_to_color_green)
+# print(ids_to_color_yellow)
 
 print("Found " + str(len(alco_sums)) + " unique ids in col G from Alcolink")
 print("Found " + str(len(fa_sums)) + " unique ids in col G from FA")
